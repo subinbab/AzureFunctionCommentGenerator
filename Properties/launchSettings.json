@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "SocxoBlurbCommentGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7221",
+      "launchBrowser": false
+    }
+  }
+}
