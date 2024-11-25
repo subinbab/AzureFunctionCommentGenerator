@@ -86,9 +86,10 @@ namespace SocxoBlurbCommentGenerator
                         {
                             existBlurb.RemainingLimit = existBlurb.RemainingLimit - 1;
                             remainingBlurbRequest = existBlurb.RemainingLimit;
+                            existRequest.Blurb.Where(blurb => blurb.Link.Equals(existBlurb.Link)).FirstOrDefault().RemainingLimit = remainingBlurbRequest;
                             BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                             ClientLimitResetInTime = ClientLimitResetIn(existRequest);
-                            Update(existBlurb);
+                            Update(existRequest);
                         }
                     }
                     if (!checkRequestTimeExceeds)
@@ -116,8 +117,8 @@ namespace SocxoBlurbCommentGenerator
                     string error;
                     try
                     {
-                        remainingBlurbRequest = existBlurb.RemainingLimit;
-                        remainingClientRequest = existRequest.RemainingLimit;
+                        //remainingBlurbRequest = existBlurb.RemainingLimit;
+                        //remainingClientRequest = existRequest.RemainingLimit;
                         comments = await GenerateComment(request.description, request.title,request.wordLimit);
                         BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                         ClientLimitResetInTime = ClientLimitResetIn(existRequest);
