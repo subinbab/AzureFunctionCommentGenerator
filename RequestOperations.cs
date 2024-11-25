@@ -118,7 +118,7 @@ namespace SocxoBlurbCommentGenerator
                     {
                         remainingBlurbRequest = existBlurb.RemainingLimit;
                         remainingClientRequest = existRequest.RemainingLimit;
-                        comments = await GenerateComment(request.description, request.title);
+                        comments = await GenerateComment(request.description, request.title,request.wordLimit);
                         BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                         ClientLimitResetInTime = ClientLimitResetIn(existRequest);
                         error = "No errors";
@@ -151,7 +151,7 @@ namespace SocxoBlurbCommentGenerator
                         string error;
                         try
                         {
-                            comments = await GenerateComment(request.description, request.title);
+                            comments = await GenerateComment(request.description, request.title, request.wordLimit);
                             error = "No errors";
                         }
                         catch (Exception ex)
@@ -187,7 +187,7 @@ namespace SocxoBlurbCommentGenerator
                             string error;
                             try
                             {
-                                comments = await GenerateComment(request.description, request.title);
+                                comments = await GenerateComment(request.description, request.title, request.wordLimit);
                                 error = "No errors";
                             }
                             catch (Exception ex)
@@ -218,7 +218,7 @@ namespace SocxoBlurbCommentGenerator
                     string error;
                     try
                     {
-                        comments = await GenerateComment(request.description, request.title);
+                        comments = await GenerateComment(request.description, request.title,request.wordLimit);
                         error = "No errors";
                     }
                     catch (Exception ex)
@@ -414,7 +414,7 @@ namespace SocxoBlurbCommentGenerator
                 throw new Exception();
             }
         }
-        private async Task<List<GeneratedComments>> GenerateComment(string description, string title)
+        private async Task<List<GeneratedComments>> GenerateComment(string description, string title , int wordLimit)
         {
 
             try
@@ -423,7 +423,6 @@ namespace SocxoBlurbCommentGenerator
 
                 // Ensure the chat completion service is correctly set up
                 var chatCompletionService = _kernal.GetRequiredService<IChatCompletionService>();
-
                 if (chatCompletionService == null)
                 {
                     throw new InvalidOperationException("Chat completion service not found.");
@@ -434,7 +433,7 @@ namespace SocxoBlurbCommentGenerator
 
                 // Generate 5 unique comments
                 // Set up chat history for generating varied comments
-                history.AddUserMessage($"You are a social media expert. Write a unique, engaging comments for the following post, with a total of approximately 120 words:\r\nPost: " + description + "\r\nComment:");
+                history.AddUserMessage($"You are a social media expert. Write a unique, engaging comments for the following post, with a total of approximately "+ wordLimit + " words:\r\nPost: " + description + "\r\nComment:");
                 //"You are a social media expert. Write five unique, engaging comments for the following post, with a total of approximately 120 words. Only separate each comment with |||SPLIT||| without adding any other words, symbols, or formatting."
                 List<string> generatedComments = new List<string>();
                 for (int i = 0; i < NoOfCommentsGenerated; i++)
@@ -462,7 +461,7 @@ namespace SocxoBlurbCommentGenerator
             }
             catch (Exception ex)
             {
-                return null;
+                throw ex;
             }
         }
     }

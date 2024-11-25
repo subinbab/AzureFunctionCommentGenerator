@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.SemanticKernel;
+using OpenAI.RealtimeConversation;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -16,7 +17,7 @@ builder.ConfigureFunctionsWebApplication();
 builder.Services.AddSingleton<Kernel>(sp =>
 {
 
-    if (false)
+    if (Environment.GetEnvironmentVariable("env") == "env")
     {
         return Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
@@ -31,9 +32,9 @@ builder.Services.AddSingleton<Kernel>(sp =>
     {
         return Kernel.CreateBuilder()
             .AddAzureOpenAIChatCompletion(
-                deploymentName: "gpt-35-turbo-16k",
-                endpoint: "https://chataisolution.openai.azure.com/",
-                apiKey: "3d6e995cb1824cd6ba1019584bb851b6")
+                deploymentName: Environment.GetEnvironmentVariable("DEPLOYMENT_MODEL"),
+                endpoint: Environment.GetEnvironmentVariable("AZURE_OPEN_AI_ENDPOINT"),
+                apiKey: Environment.GetEnvironmentVariable("AZURE_OPEN_AI_KEY"))
             .Build();
 
     }

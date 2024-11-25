@@ -38,10 +38,11 @@ namespace SocxoBlurbCommentGenerator
     }
     public class RequestModel
     {
-        public string link { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public string clientId { get; set; }
+        public string link { get; set; } = string.Empty;
+        public string title { get; set; } = string.Empty;
+        public string description { get; set; } = string.Empty;
+        public string clientId { get; set; } = string.Empty;
+        public int wordLimit { get; set; }
     }
     public class Requests : BaseEntity
     {
