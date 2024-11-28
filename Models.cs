@@ -68,7 +68,7 @@ namespace SocxoBlurbCommentGenerator
 
     public class GeneratedComments
     {
-        public Guid id { get; set; }
+        public string id { get; set; }
         public string generatedComment { get; set; }
     }
 }

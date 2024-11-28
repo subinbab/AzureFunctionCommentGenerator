@@ -11,6 +11,8 @@ using Microsoft.Data.SqlClient;
 using Azure.Core;
 using System.Reflection.Metadata;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace SocxoBlurbCommentGenerator
 {
@@ -41,7 +43,13 @@ namespace SocxoBlurbCommentGenerator
                 int remainingBlurbRequest = 0;
                 var client = FetchClientId(request.clientId);
                 var existRequest = GetByClientId(request.clientId, cancellationToken);
-                var existBlurb = GetByLink(request.link, cancellationToken);
+                //var existBlurb = GetByLink(request.link, cancellationToken);
+                Blurbs existBlurb = null;
+                if(existRequest != null)
+                {
+                    existBlurb = existRequest.Blurb.Where(c => c.Link.Equals(request.link)).FirstOrDefault();
+                }
+               
                 string BlurbLimitResetInTime = "";
                 string ClientLimitResetInTime = "";
                 if (existRequest != null && existBlurb != null)
@@ -80,7 +88,7 @@ namespace SocxoBlurbCommentGenerator
                         {
                             remainingBlurbRequest = existBlurb.RemainingLimit;
                             remainingClientRequest = existRequest.RemainingLimit;
-                            return new Response(null, request.link, false, "error occured exceeds the time limit", remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
+                            return new Response(null, request.link, false, ResponseMessages.MSG1, remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
                         }
                         else
                         {
@@ -101,7 +109,7 @@ namespace SocxoBlurbCommentGenerator
                         {
 
                             remainingClientRequest = existRequest.RemainingLimit;
-                            return new Response(null, request.link, false, "error occured exceeds the time limit", remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
+                            return new Response(null, request.link, false, ResponseMessages.MSG2, remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
                         }
                         else
                         {
@@ -143,7 +151,7 @@ namespace SocxoBlurbCommentGenerator
                         existRequest.DateCreated = DateTime.Now;
                         existBlurb = new Blurbs();
                         existBlurb.DateCreated = DateTime.Now;
-                        BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
+                       // BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                         ClientLimitResetInTime = ClientLimitResetIn(existRequest);
                         //_blurbRepository.Create(new Blurbs { Title = request.title, Link = request.link, Description = request.description, Limit = limit, RemainingLimit = limit, DateCreated = DateTime.Now });
                         Add((new Blurbs { Title = request.title, Link = request.link, Description = request.description, Limit = limit, RemainingLimit = limit, DateCreated = DateTime.Now }));
@@ -167,23 +175,25 @@ namespace SocxoBlurbCommentGenerator
                         existRequest.RemainingLimit = existRequest.RemainingLimit - 1;
                         remainingClientRequest = existRequest.RemainingLimit;
                         remainingBlurbRequest = limit;
-                        existBlurb = new Blurbs();
-                        existBlurb.DateCreated = DateTime.Now;
-                        BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
+                        //existBlurb = new Blurbs();
+                        //existBlurb.DateCreated = DateTime.Now;
+                       // BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                         ClientLimitResetInTime = ClientLimitResetIn(existRequest);
                         if (existRequest.RemainingLimit <= 0)
                         {
-                            return new Response(null, request.link, false, "error occured exceeds the time limit", remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
+                            return new Response(null, request.link, false, ResponseMessages.MSG2, remainingBlurbRequest, remainingClientRequest, ResourceDetails.name, client.ToString(), BlurbLimitResetInTime, ClientLimitResetInTime);
                         }
                         else
                         {
-                            existRequest.RemainingLimit = existRequest.RemainingLimit - 1;
+                            //var existBlurbRemainLimit = existRequest.Blurb.Where(c => c.Id.Equals(existBlurb.Id)).FirstOrDefault().RemainingLimit;
+                            //existRequest.Blurb.Where(c => c.Id.Equals(existBlurb.Id)).FirstOrDefault().RemainingLimit = existBlurbRemainLimit - 1;
+                            //existRequest.RemainingLimit = existRequest.RemainingLimit - 1;
                             //_blurbRepository.Create(new Blurbs { Title = request.title, Link = request.link, Description = request.description, Limit = limit, RemainingLimit = limit, DateCreated = DateTime.Now });
                             //await _unitOfWork.Save(cancellationToken);
                             existRequest.Blurb.Add((new Blurbs { Title = request.title, Link = request.link, Description = request.description, Limit = limit, RemainingLimit = limit, DateCreated = DateTime.Now }));
                             Update(new Requests { RequestedTime = DateTime.Now, Blurb = existRequest.Blurb, Domian = "Socxo", Limit = domainRequestLimit, RemainingLimit = domainRequestLimit, ClientId = request.clientId, DateCreated = DateTime.Now });
-                            existBlurb.DateCreated = DateTime.Now;
-                            BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
+                            //existBlurb.DateCreated = DateTime.Now;
+                            //BlurbLimitResetInTime = BlurbLimitResetIn(existBlurb);
                             List<GeneratedComments> comments;
                             string error;
                             try
@@ -429,16 +439,16 @@ namespace SocxoBlurbCommentGenerator
                     throw new InvalidOperationException("Chat completion service not found.");
                 }
 
-                // Create a new chat history
+                // Create a new chat historySocxoBlurbCommentGeneratorSocxoBlurbCommentGenerator
                 ChatHistory history = new ChatHistory();
 
                 // Generate 5 unique comments
                 // Set up chat history for generating varied comments
-                history.AddUserMessage($"You are a social media expert. Write a unique, engaging comments for the following post, with a total of approximately "+ wordLimit + " words:\r\nPost: " + description + "\r\nComment:");
+                history.AddUserMessage($"You are a social media expert. Write a unique, "+ NoOfCommentsGenerated + " engaging comments for the following post, with a total of approximately "+ wordLimit + " words between both comments .Return thats in json list format having id should have a Guid value and generatedComment property , The returned object list should be enclosed in square brackets [ ] for direct parsing into a C# object because c# instance is a collection of generated Comments. Ensure that the total word count of both comments combined is approximately "+wordLimit+" words. Avoid adding any extra text, only return the JSON suitable for direct parsing into C#. Please make sure the response is always wrapped in square brackets, without any additional text. The format should look like this: [ { \"id\": \"GUID\", \"generatedComment\": \"comment text\" }, { \"id\": \"GUID\", \"generatedComment\": \"comment text\" } ]. :\r\nPost: " + description + "\r\nComment:");
                 //"You are a social media expert. Write five unique, engaging comments for the following post, with a total of approximately 120 words. Only separate each comment with |||SPLIT||| without adding any other words, symbols, or formatting."
                 List<string> generatedComments = new List<string>();
-                for (int i = 0; i < NoOfCommentsGenerated; i++)
-                {
+                //for (int i = 0; i < NoOfCommentsGenerated; i++)
+                //{
 
                     // Get chat completion response
                     var response = await chatCompletionService.GetChatMessageContentsAsync(history);
@@ -448,17 +458,19 @@ namespace SocxoBlurbCommentGenerator
                     {
                         comment += res;
                     }
-
+                // Remove \n (newline) and \r\n (carriage return and newline) characters
+                string stringWithoutNewlines = comment.Replace("\n", "").Replace("\r", "");
+                var genCom = JsonConvert.DeserializeObject<List<GeneratedComments>>(stringWithoutNewlines);
                     //foreach (var i in comment.Split("|||SPLIT|||"))
                     //{
-                    listComments.Add(new GeneratedComments { id = Guid.NewGuid(), generatedComment = comment });
+                    listComments.Add(new GeneratedComments { id = "", generatedComment = comment });
                     // }
 
 
                     // Add response to chat history for context
                     history.AddAssistantMessage("create a different comment");
-                }
-                return listComments;
+                //}
+                return genCom;
             }
             catch (Exception ex)
             {
@@ -470,4 +482,18 @@ namespace SocxoBlurbCommentGenerator
     {
         public static string name { get; set; } = string.Empty;
     }
+    public static class ResponseMessages{
+        public static string MSG1 = "Post Text Generation to this Blurbs limit Exceeded please try it after sometime";
+        public static string MSG2 = "Post Text Generation from your organisation limit Exceeded please try it after sometime";
+
+        public static string MSG3 = "Generation is not happened due to some technical issue , try again";
+        public static string MSG4 = "";
+        public static string MSG5 = "";
+        public static string MSG6 = "";
+        public static string MSG7 = "";
+        public static string MSG8 = "";
+        public static string MSG9 = "";
+    }
 }
+
+
